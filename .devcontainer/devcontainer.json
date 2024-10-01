@@ -1,0 +1,16 @@
+{
+    "name": "SDG Story App",
+    "image": "mcr.microsoft.com/devcontainers/javascript-node:18",
+    "customizations": {
+      "vscode": {
+        "extensions": [
+          "dbaeumer.vscode-eslint",
+          "esbenp.prettier-vscode"
+        ]
+      }
+    },
+    "workspaceFolder": "/workspaces/sdg-story",
+    "forwardPorts": [3000],
+    "postCreateCommand": "npm install"
+  }
+  
