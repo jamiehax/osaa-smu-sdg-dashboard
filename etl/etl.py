@@ -237,7 +237,7 @@ def get4_4_2_1():
 
 # indicator 4.4.2.2
 def get_4_4_2_2():
-    imf_tax_evasion_df = pd.read_excel('data/imf tax evasion.xlsx', engine='openpyxl', sheet_name='Prices in USD')
+    imf_tax_evasion_df = pd.read_excel('data/imf tax evasion.xlsx', engine='openpyxl', sheet_name=None)
     return imf_tax_evasion_df
 
 
@@ -323,12 +323,12 @@ def get_4_4_2_1():
 def get_4_4_3_2():
 
     # get all IMF ISORA data
-    imf_isora_resources_ict_df = pd.read_excel('data/imf isora resources and ICT infrastructure.xlsx', engine='openpyxl', sheet_name='Data')
-    imf_isora_rstaff_metrics_df = pd.read_excel('data/imf isora staff metrics.xlsx', engine='openpyxl', sheet_name='Data')
-    imf_isora_stakeholder_df = pd.read_excel('data/imf isora stakeholder interactions.xlsx', engine='openpyxl', sheet_name='Data')
-    imf_isora_op_metrics_audit_df = pd.read_excel('data/imf isora op metrics audit, criminal investigations, dispute resolution.xlsx', engine='openpyxl', sheet_name='Data')
-    imf_isora_op_metrics_payments_df = pd.read_excel('data/imf isora op metrics payments and arrears.xlsx', engine='openpyxl', sheet_name='Data')
-    imf_isora_op_metrics_registration_df = pd.read_excel('data/imf isora op metrics registration and filing.xlsx', engine='openpyxl', sheet_name='Data')
+    imf_isora_resources_ict_df = pd.read_excel('data/imf isora resources and ICT infrastructure.xlsx', engine='openpyxl', sheet_name=None)
+    imf_isora_rstaff_metrics_df = pd.read_excel('data/imf isora staff metrics.xlsx', engine='openpyxl', sheet_name=None)
+    imf_isora_stakeholder_df = pd.read_excel('data/imf isora stakeholder interactions.xlsx', engine='openpyxl', sheet_name=None)
+    imf_isora_op_metrics_audit_df = pd.read_excel('data/imf isora op metrics audit, criminal investigations, dispute resolution.xlsx', engine='openpyxl', sheet_name=None)
+    imf_isora_op_metrics_payments_df = pd.read_excel('data/imf isora op metrics payments and arrears.xlsx', engine='openpyxl', sheet_name=None)
+    imf_isora_op_metrics_registration_df = pd.read_excel('data/imf isora op metrics registration and filing.xlsx', engine='openpyxl', sheet_name=None)
 
     return pd.concat([imf_isora_resources_ict_df, imf_isora_rstaff_metrics_df, imf_isora_stakeholder_df, imf_isora_op_metrics_audit_df, imf_isora_op_metrics_payments_df, imf_isora_op_metrics_registration_df])
 
