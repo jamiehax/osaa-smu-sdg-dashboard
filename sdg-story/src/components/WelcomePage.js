@@ -11,7 +11,7 @@ const WelcomePage = ({ onStart, onDashboard}) => {
             UN-OSAA Interactive SDG Story
           </h1>
 
-          <button onClick={onDashboard} className="w-2/3 bg-gradient-to-r from-blue-300 via-un-blue to-black text-white px-4 py-3 rounded-lg transition-transform transform hover:scale-105 hover:shadow-lg duration-300">
+          <button onClick={onDashboard} className="w-2/3 bg-gradient-to-r from-black via-un-blue to-blue-300 text-white px-4 py-3 rounded-lg transition-transform transform hover:scale-105 hover:shadow-lg duration-300">
             Go to Dashboards
           </button>
           
