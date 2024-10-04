@@ -17,7 +17,7 @@ const WelcomePage = ({ onStart, onDashboard}) => {
           
           <div className="flex items-center justify-center flex-col h-full">
             <img
-              src="${basePath}/images/sdg-circle-logo.png"
+              src="/images/sdg-circle-logo.png"
               alt="SDG Logo"
               className="transition-transform duration-300 spin-animation max-h-[50vh] "
             />
@@ -35,7 +35,7 @@ const WelcomePage = ({ onStart, onDashboard}) => {
           onClick={onStart}
         >
           <img
-            src="${basePath}/images/osaa-logo-transparent.svg"
+            src="/images/osaa-logo-transparent.svg"
             alt="OSAA logo"
             className="h-full object-cover transition-transform duration-500 group-hover:transform-logo"
           />
