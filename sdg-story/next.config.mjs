@@ -1,7 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-    output: 'export',  // Enable static export
+    output: 'export',
+    basePath: '/osaa-smu-sdg-dashboard/sdg-story', 
   };
   
   export default nextConfig;
-  

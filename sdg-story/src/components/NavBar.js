@@ -45,7 +45,7 @@ const NavBar = ({ onBack, onHome, onNext }) => {
 
                 {/* OSAA Logo */}
                 <img
-                    src="/images/osaa-logo-transparent.svg"
+                    src="${basePath}/images/osaa-logo-transparent.svg"
                     alt="OSAA Logo"
                     className="w-8 h-10"
                 />
