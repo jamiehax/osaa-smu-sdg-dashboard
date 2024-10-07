@@ -330,7 +330,14 @@ def get_4_4_3_2():
     imf_isora_op_metrics_payments_df = pd.read_excel('data/imf isora op metrics payments and arrears.xlsx', engine='openpyxl', sheet_name=None)
     imf_isora_op_metrics_registration_df = pd.read_excel('data/imf isora op metrics registration and filing.xlsx', engine='openpyxl', sheet_name=None)
 
-    return pd.concat([imf_isora_resources_ict_df, imf_isora_rstaff_metrics_df, imf_isora_stakeholder_df, imf_isora_op_metrics_audit_df, imf_isora_op_metrics_payments_df, imf_isora_op_metrics_registration_df])
+    return {
+        'imf_isora_resources_ict_df': imf_isora_resources_ict_df,
+        'imf_isora_rstaff_metrics_df': imf_isora_rstaff_metrics_df,
+        'imf_isora_stakeholder_df': imf_isora_stakeholder_df,
+        'imf_isora_op_metrics_audit_df': imf_isora_op_metrics_audit_df,
+        'imf_isora_op_metrics_payments_df': imf_isora_op_metrics_payments_df,
+        'imf_isora_op_metrics_registration_df': imf_isora_op_metrics_registration_df
+    }
 
 
 # indicator 4.4.4.2
