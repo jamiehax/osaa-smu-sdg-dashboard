@@ -1,155 +1,179 @@
 import pandas as pd
 import wbgapi as wb
 import re
+import openpyxl
+import xlrd
 
-
-# iso3 country code reference 
 iso3_reference_df = pd.read_csv('iso3_country_reference.csv')
-
-# list of african countries iso3 and m49 codes
 africa_iso3 = list(wb.region.members('AFR'))
+
 africa_m49 = iso3_reference_df[iso3_reference_df['iso3'].isin(africa_iso3)]['m49'].tolist()
 
+# indicator_to_csv
+def process_indicator_to_csv(indicator_code, file_name):
+    # Step 1: Extract the data for the indicator and reset the index
+    df = wb.data.DataFrame(indicator_code, wb.region.members('AFR'), db=67).reset_index()
 
-# indicator 4.1.1.1
-def get_4_1_1_1():
-    indicator4_1_1_1 = wb.data.DataFrame('PI-01', wb.region.members('AFR'), db=67)
-    return indicator4_1_1_1
+    # Step 2: Melt the DataFrame from wide to long format
+    df = pd.melt(df, id_vars=['classification', 'economy'], var_name='YearMonth', value_name='Value')
 
+    # Step 3: Rename and clean columns
+    df = df.rename(columns={'economy': 'Country'})
+    df['Year'] = df['YearMonth'].str[2:6]
+    df['Month'] = df['YearMonth'].str[6:]
+    df = df.drop(columns=['YearMonth'])  # Drop 'YearMonth' column
 
-# indicator 4.1.1.2
-def get_4_1_1_2():
-    indicator4_1_1_2 = wb.data.DataFrame('PI-02', wb.region.members('AFR'), db=67)
-    return indicator4_1_1_2
+    # Step 4: Reorder columns and save to CSV
+    df = df[['classification', 'Country', 'Year', 'Month', 'Value']]
+    df.to_csv(file_name, index=False)
+    print(f"Cleaned data saved to '{file_name}'")
 
+# CSV Indicator 4.1.1.1: DONE!
+process_indicator_to_csv('PI-01', 'indicator_4_1_1_1.csv')
+# CSV indicator 4.1.1.2: DONE!
+process_indicator_to_csv('PI-02', 'indicator_4_1_1_2.csv')
+# CSV indicator 4.1.1.3: DONE!
+process_indicator_to_csv('PI-03', 'indicator_4_1_1_3.csv')
 
-# indicator 4.1.1.3
-def get_4_1_1_3():
-    indicator4_1_1_3 = wb.data.DataFrame('PI-03', wb.region.members('AFR'), db=67)
-    return indicator4_1_1_3
-
-
-# indicator 4.2.1.1
+######################################################################################
+# indicator 4.2.1.1: DONE!
 def get_4_2_1_1():
     indicator4_2_1_1 = wb.data.DataFrame('GC.TAX.TOTL.GD.ZS', wb.region.members('AFR'))
     return indicator4_2_1_1
+indicator_4_2_1_1_df = get_4_2_1_1()
+indicator_4_2_1_1_df = indicator_4_2_1_1_df.reset_index()
 
+long_df = pd.melt(indicator_4_2_1_1_df, id_vars=['economy'], var_name='Year', value_name='Value')
+long_df['Year'] = long_df['Year'].str.replace('YR', '')
+long_df['Indicator'] = 'Tax Revenue as Percentage of GDP'
+long_df.to_csv('indicator_4_2_1_1.csv', index=False)
 
-# indicator 4.2.1.2
-def get_4_2_1_2():
+########################################################################################
+# indicator 4.2.1.2: DONE!
 
-    # read in data
-    ataf_df = pd.read_excel('data/ataf_data.xlsx', sheet_name='Sheet1', engine='openpyxl')
+# Load the Excel file
+file_path = 'ATO_RAW_ATAF 2.xlsx' #this is relative path from my 
+xls = pd.ExcelFile(file_path, engine='openpyxl')
 
-    # split country and year using regex
-    def extract_country_year(val):
-        match = re.match(r"(.*)\s(\d{4})", str(val))
-        if match:
-            country = match.group(1)
-            year = match.group(2)
-            return country, year
-        return [None, None]
+# Load the first sheet into a DataFrame
+df = pd.read_excel(xls, 'Sheet1')
+
+# Initialize lists to store cleaned data
+cleaned_data = []
+
+# Temporary storage for theme and topic
+current_theme = None
+current_topic = None
+
+# Loop through the DataFrame to organize the data based on themes, topics, and indicators
+for index, row in df.iterrows():
+    first_col_value = row[0]
     
-    # convert blank cells or '/' to NaN
-    def clean_values(val):
-        if val == "/" or pd.isnull(val):
-            return pd.NA
-        return val
+    # Check if the row indicates a new Theme
+    if isinstance(first_col_value, str) and first_col_value.startswith('Theme'):
+        current_theme = first_col_value.strip()
+        current_topic = None  # Reset topic when a new theme starts
+    
+    # Check if the row indicates a new Topic
+    elif pd.notna(first_col_value) and first_col_value != 'Year':
+        current_topic = first_col_value.strip()
+    
+    # If the row indicates 'Year', extract country and year, then collect indicators
+    elif first_col_value == 'Year':
+        for col_idx in range(1, len(row)):
+            if pd.notna(row[col_idx]):
+                country_year = row[col_idx]
+                if isinstance(country_year, str) and len(country_year.split()) == 2:
+                    country, year = country_year.split()
+                    
+                    # Collect indicators until the next 'Theme' row
+                    indicator_idx = index + 1
+                    while indicator_idx < len(df) and not (
+                        isinstance(df.iloc[indicator_idx, 0], str) and df.iloc[indicator_idx, 0].startswith('Theme')
+                    ):
+                        indicator_name = df.iloc[indicator_idx, 0]
+                        indicator_value = df.iloc[indicator_idx, col_idx]
+                        
+                        # Add cleaned data to the list if the indicator name is not NaN
+                        if pd.notna(indicator_name):
+                            cleaned_data.append({
+                                'Theme': current_theme,
+                                'Topic': current_topic,
+                                'Country': country,
+                                'Year': year,
+                                'Indicator': indicator_name.strip(),
+                                'Value': indicator_value
+                            })
+                        indicator_idx += 1
 
-    # extract country-year combinations from row 3 (columns B onwards)
-    country_year_row = ataf_df.iloc[2, 1:]
-    countries_years = country_year_row.apply(extract_country_year)
-    country_years_df = pd.DataFrame(countries_years.tolist(), columns=["Country", "Year"])
+# Create a cleaned DataFrame from the collected data
+cleaned_df = pd.DataFrame(cleaned_data)
 
-    # rows that contain indicators
-    indicator_rows = [
-        3, 4, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 
-        21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 
-        40, 41, 42, 43, 44, 45, 46, 47, 
-        51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 
-        65, 66, 67, 68, 
-        71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 
-        83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 
-        95, 96, 97, 98, 99, 100
-    ]
+# Filter for 'Domestic revenue from large taxpayers' and indicators containing 'Taxpayers'
+filtered_df = cleaned_df[(cleaned_df['Indicator'].str.contains('Domestic revenue from large taxpayers', case=False)) |
+                         (cleaned_df['Indicator'].str.contains('Taxpayers', case=False))]
 
-
-    # extract indicators names and values
-    indicator_data = {}
-    for row in indicator_rows:
-        indicator_name = ataf_df.iloc[row, 0]  # indicator name is in column A
-        indicator_values = ataf_df.iloc[row, 1:].apply(clean_values).reset_index(drop=True)  # values are in columns B onwards
-        indicator_data[indicator_name] = indicator_values
-
-    # combine the country-year dataframe with the indicator data
-    result_df = pd.concat([country_years_df.reset_index(drop=True), pd.DataFrame(indicator_data)], axis=1)
-
-    return result_df
-
-
-# indicator 4.2.2.1
+# Display the first few rows of the cleaned DataFrame
+print(filtered_df .head())
+filtered_df .to_csv('indicator_4_2_1_2.csv', index=False)
+############################################################################################
+# indicator 4.2.2.1 DONE!
+# Define the function to get the indicator
 def get_4_2_2_1():
 
-    # read in data
-    usaid_df = pd.read_excel('data/USAID tax effort and buyancy.xlsx', engine='openpyxl', sheet_name='Data')
+    usaid_df = pd.read_excel('USAID tax effort and buyancy.xlsx', engine='openpyxl', sheet_name='Data')
+    indicator4_2_2_1 = usaid_df[usaid_df['m49'].notna()][['ISO2','country_name', 'year', 'Tax effort (ratio) [tax_eff]']]
+    indicator4_2_2_1 = indicator4_2_2_1.rename(columns={'Tax effort (ratio) [tax_eff]': 'Value'})
+    indicator4_2_2_1['Indicator'] = 'Tax effort (ratio)'
+    return indicator4_2_2_1[['country_name', 'year', 'Indicator', 'Value']]
+indicator4_2_2_1 = get_4_2_2_1()
+indicator4_2_2_1.to_csv('indicator_4_2_2_1.csv', index=False)
+##########################################################################################
+# indicator 4.2.2.2 two parts Tax buoyancy [by_tax] + tax cpacity and gap from
+#4_2_2_1a
+def get_4_2_2_2a():
 
-    # extract indicator column
-    indicator4_2_2_1 = usaid_df[usaid_df['country_id'].isin(africa_m49)][['country_name', 'year', 'Tax effort (ratio) [tax_eff]']]
+    usaid_df = pd.read_excel('USAID tax effort and buyancy.xlsx', engine='openpyxl', sheet_name='Data')
+    indicator4_2_2_2a = usaid_df[usaid_df['m49'].notna()][['ISO2','country_name', 'year', 'Tax buoyancy [by_tax]']]
+    indicator4_2_2_2a = indicator4_2_2_1.rename(columns={' Tax buoyancy [by_tax]': 'Value'})
+    indicator4_2_2_2a['Indicator'] = 'Tax effort (ratio)'
+    return indicator4_2_2_2a[['country_name', 'year', 'Indicator', 'Value']]
+indicator4_2_2_2a = get_4_2_2_2a()
 
-    return indicator4_2_2_1
+indicator4_2_2_1a.to_csv('indicator_4_2_2_1a.csv', index=False)
 
+#4_2_2_1b it has gap cpacity and buoyancy
+file_path = 'C:/Users/MYASSIEN/WB_TAX CPACITY AND GAP.csv'
+df = pd.read_csv(file_path)
+# Define the function to reshape the dataset
+def reshape_tax_data(df):
+    # Filter for relevant indicators: Buoyancy, Capacity, and Gap
+    indicators = ['Buoyancy', 'Capacity', 'Gap']
+    reshaped_data = []
 
-# indicator 4.2.2.2
-def get_4_2_2_2():
+    for indicator in indicators:
+        # Extract columns that contain the indicator name
+        indicator_columns = [col for col in df.columns if indicator in col]
+        for col in indicator_columns:
+            # Extract the main indicator name and unit if available
+            main_indicator = df['indicator name'].iloc[0] if 'indicator name' in df.columns else 'Unknown'
+            unit = df['indicator unit'].iloc[0] if 'indicator unit' in df.columns else 'Unknown'
+            reshaped_data.append(
+                df[['iso3_code', 'Year']]  # Keep common columns
+                .assign(Indicator=f"{main_indicator} - {unit} - {indicator}",  # Indicator name with unit and type
+                        Value=df[col])  # Indicator value
+            )
 
-    # read in data
-    ataf_df = pd.read_excel('data/ataf_data.xlsx', sheet_name='Sheet1', engine='openpyxl')
+    reshaped_df = pd.concat(reshaped_data)
+    return reshaped_df[['iso3_code', 'Year', 'Indicator', 'Value']]
 
-    # function to split country and year from name
-    def extract_country_year(val):
-        match = re.match(r"(.*)\s(\d{4})", str(val))
-        if match:
-            country = match.group(1)
-            year = match.group(2)
-            return country, year
-        return [None, None]
-    
-    # convert blank cells or '/' to NaN
-    def clean_values(val):
-        if val == "/" or pd.isnull(val):
-            return pd.NA
-        return val
+# Reshape the data
+indicator4_2_2_1b = reshape_tax_data(df)
 
-    # extract country-year name and split
-    country_year_row = ataf_df.iloc[2, 1:]
-    countries_years = country_year_row.apply(extract_country_year)
-    country_years_df = pd.DataFrame(countries_years.tolist(), columns=["Country", "Year"])
+# Save the reshaped DataFrame to a CSV file
+indicator4_2_2_1b.to_csv('indicator4_2_2_1b.csv', index=False)
 
-    # rows with indicators
-    indicator_rows = [
-        3, 4, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 
-        21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 
-        40, 41, 42, 43, 44, 45, 46, 47, 
-        51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 
-        65, 66, 67, 68, 
-        71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 
-        83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 
-        95, 96, 97, 98, 99, 100
-    ]
-
-
-    # extract indicators names and values
-    indicator_data = {}
-    for row in indicator_rows:
-        indicator_name = ataf_df.iloc[row, 0]  # indicator name in column A
-        indicator_values = ataf_df.iloc[row, 1:].apply(clean_values).reset_index(drop=True)  # values from columns B onwards
-        indicator_data[indicator_name] = indicator_values
-
-    # combine the country-year dataframe with the indicator data
-    result_df = pd.concat([country_years_df.reset_index(drop=True), pd.DataFrame(indicator_data)], axis=1)
-
-    return result_df
-
+####################################################################################
 
 # indicator 4.3.1.1
 def get_4_3_1_1():
@@ -460,26 +484,41 @@ def get_4_4_2_4():
     return indicator4_4_2_4
 
 
+######################################################################################
+# indicator 4.4.3.1 has several indicators
+def get_4_4_3_1b():
+    wjp_rule_of_law = pd.read_excel('C:/Users/wjp rule of law.xlsx', engine='openpyxl', sheet_name='Historical Data')[['Country', 'Year', 'WJP Rule of Law Index: Overall Score']]
+get_4_4_3_1b()
+# Function to get and save Rule of Law & Justice indicator - Mo Ibrahim
+def get_4_4_3_1c():
+   def get_4_4_3_1c():
+    rule_of_law_justice = pd.read_csv('mo ibrahim rule of law - score and rank.csv')[['Country', 'Year', 'Rule of Law & Justice (score and rank)']]
+get_4_4_3_1c()
+# Function to get and save Reduce Corruption indicator - World Bank CPIA
+def get_4_4_3_1d():
+    cpia_reduce_corruption = wb.data.DataFrame('IQ.CPA.PUBS.XQ', wb.region.members('AFR'), db=31)
+    cpia_reduce_corruption.to_csv('4.4.3.1d_Reduce_Corruption.csv', index=False)
+get_4_4_3_1d()
+# Function to get and save Sound Institutions indicator - World Bank CPIA
+def get_4_4_3_1e():
+    cpia_sound_institutions = wb.data.DataFrame('IQ.CPA.TRAN.XQ', wb.region.members('AFR'), db=31)
+    cpia_sound_institutions.to_csv('4.4.3.1e_Sound_Institutions.csv', index=False)
 
-# indicator 4.4.3.1
-def get_4_4_3_1():
-
-    # get wjp indicators
-    wjp_rule_of_law = pd.read_excel('data/wjp rule of law.xlsx', engine='openpyxl', sheet_name='Historical Data')[['Country', 'Year', 'WJP Rule of Law Index: Overall Score']]
-    wjp_open_government = pd.read_excel('data/wjp rule of law.xlsx', engine='openpyxl', sheet_name='Historical Data')[['Country', 'Year', 'Factor 3: Open Government']]
-    wjp_combat_crime = pd.read_excel('data/wjp rule of law.xlsx', engine='openpyxl', sheet_name='Historical Data')[['Country', 'Year', 'Factor 5: Order and Security', 'Factor 7: Civil Justice', 'Factor 8: Criminal Justice']]
-
-    # get CPIA indicators
-    cpia_public_sector_management = wb.data.DataFrame('IQ.CPA.PUBS.XQ', wb.region.members('AFR'), db=31)
-    cpia_public_sector_management = wb.data.DataFrame('IQ.CPA.TRAN.XQ', wb.region.members('AFR'), db=31)
-
-    # get ID4D indicators
-    id4d_birth_registration = wb.data.DataFrame('SP.REG.BRTH.ZS', wb.region.members('AFR'), db=89)
-    id4d_birth_certification = wb.data.DataFrame('ID.OWN.BRTH.ZS', wb.region.members('AFR'), db=89)
-    id4d_id_ownership = wb.data.DataFrame('ID.OWN.TOTL.ZS', wb.region.members('AFR'), db=89)
-
-    # return all together
-    return pd.concat([wjp_rule_of_law, wjp_open_government, wjp_combat_crime, cpia_public_sector_management, cpia_public_sector_management, id4d_birth_registration, id4d_birth_certification, id4d_id_ownership])
+# Function to get and save Identity Documentation indicator - World Bank ID4D
+def get_4_4_3_1f():
+    id4d_identity_documentation = wb.data.DataFrame('SP.REG.BRTH.ZS', wb.region.members('AFR'), db=89)
+    id4d_identity_documentation.to_csv('4.4.3.1f_Identity_Documentation.csv', index=False)
+get_4_4_3_1f()
+# Function to get and save Public Access to Information indicator - World Justice Project
+def get_4_4_3_1g():
+    public_access_information = pd.read_excel('C:/Users/wjp rule of law.xlsx', engine='openpyxl', sheet_name='Historical Data')[['Country', 'Year', 'Factor 3: Open Government']]
+    public_access_information.to_csv('4.4.3.1g_Public_Access_to_Information.csv', index=False)
+get_4_4_3_1g()
+# Function to get and save Institutions to Combat Crime indicator - World Justice Project
+def get_4_4_3_1h():
+    institutions_combat_crime = pd.read_excel('C:/Users/wjp rule of law.xlsxx', engine='openpyxl', sheet_name='Historical Data')[['Country', 'Year', 'Factor 5: Order and Security', 'Factor 7: Civil Justice', 'Factor 8: Criminal Justice']]
+    institutions_combat_crime.to_csv('4.4.3.1h_Institutions_to_Combat_Crime.csv', index=False)
+get_4_4_3_1h()
 
 
 # indicator 4.4.3.2
