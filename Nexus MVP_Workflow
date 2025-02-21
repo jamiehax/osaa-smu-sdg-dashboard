@@ -1,0 +1,53 @@
+📂 Nexus Workflow/
+│
+├── 📁 data_lookup/  🔍 *Step 1: Identify Data Needs*
+│   │   ├── 📄 10_10_2024_Data_lookup.xlsx  → *Excel file containing structured data needs.*
+│   │   ├── 📄 Sheet1  → *Defines specific data requirements for analysis.*
+│   │   ├── 📄 General Data Sources  → *Lists available datasets and their access methods (API, exportable tables).*
+│
+├── 📁 raw_data/  📥 *Step 2: Collect Raw Data*
+│   │
+│   ├── 📁 afrobarometer/  🌍 *Public opinion surveys across Africa*
+│   │   │   ├── 📄 afrobarometer_r1_2001.sav  → *Survey responses from 2001.*
+│   │   │   ├── 📄 afrobarometer_r8_2022.sav  → *Latest survey responses from 2022.*
+│   │
+│   ├── 📁 tax_data/  💰 *Tax and economic datasets*
+│   │   │   ├── 📄 ataf_data.xlsx  → *ATAF tax administration data.*
+│   │   │   ├── 📄 ATO_RAW_ATAF 2.xlsx  → *Another tax dataset from ATAF.*
+│   │   │   ├── 📄 gfi_trade_mispricing.xlsx  → *Data on trade mispricing and financial opacity.*
+│   │   │   ├── 📄 USAID_tax_effort.xlsx  → *USAID tax performance metrics.*
+│   │
+│   ├── 📁 world_bank/  🌍 *World Bank Indicators*
+│   │   │   ├── 📄 wb_cpia.csv  → *Country Policy & Institutional Assessment.*
+│   │   │   ├── 📄 wb_id4d.csv  → *Identification for Development index.*
+│   │   │   ├── 📄 wb_wdi.csv  → *World Development Indicators.*
+│   │   │   ├── 📄 wb_wgi.csv  → *World Governance Indicators.*
+│
+├── 📁 etl_process/  🔄 *Step 3: Extract, Transform, Load (ETL)*
+│   │
+│   ├── 📄 etl.py  → *Main ETL script: extracts, cleans, and structures data.*
+│   │   ├── 📄 iso3_country_reference.csv  → *Reference table for country codes.*
+│   │   ├── 📄 indicator_4_2_1_1.csv  → *Processed tax revenue as % of GDP data.*
+│   │   ├── 📄 indicator_4_2_1_2.csv  → *Filtered IMF ISORA tax administration data.*
+│   │   ├── 📄 indicator_4_2_2_1.csv  → *Tax effort (ratio) extracted from USAID dataset.*
+│   │   ├── 📄 indicator_4_3_1_1.csv  → *Market capitalization of listed companies dataset.*
+│   │   ├── 📄 indicator_4_3_1_2.csv  → *Portfolio investment (bonds) data.*
+│   │   ├── 📄 indicator_4_3_1_3.csv  → *Reserves & external debt ratio dataset.*
+│   │   ├── 📄 indicator_4_4_2_2.csv  → *Active taxpayers registered per tax type (IMF ISORA).*
+│   │   ├── 📄 indicator_4_4_4_2.csv  → *Financial Secrecy Index from Tax Justice Network.*
+│   │   ├── 📄 indicator_4_4_5_1.csv  → *Tax buoyancy extracted from USAID dataset.*
+│
+├── 📁 tableau_dashboard/  📊 *Step 4: Load & Visualize Data in Tableau*
+│   │   ├── 📄 dashboard.twbx  → *Tableau workbook containing visualizations.*
+│   │   ├── 📄 data_source.csv  → *Structured dataset used for dashboard charts.*
+│   │
+│   ├── 📁 visualizations/  
+│   │   ├── 📄 africa_map.twb  → *Geospatial tax & economic insights.*
+│   │   ├── 📄 tax_metrics.twb  → *Tax buoyancy, VAT, and corporate tax performance.*
+│   │   ├── 📄 economic_indicators.twb  → *Revenue, expenditure, and financial secrecy metrics.*
+│   │   ├── 📄 governance_security.twb  → *Rule of law, transparency, and governance KPIs.*
+│   │
+│   ├── 📁 interactivity_filters/  
+│   │   ├── 📄 year_selector.twb  → *Allows users to switch between different years.*
+│   │   ├── 📄 country_filter.twb  → *Focuses analysis on specific regions/countries.*
+│   │   ├── 📄 metric_toggle.twb  → *Users can switch between key economic indicators.*
